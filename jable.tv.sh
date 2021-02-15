@@ -49,7 +49,12 @@ for f in $files; do
     rn=$(((max - i) * un / THREAD))
     bc=$(wc -c <"$dir/$f")
     bs=$((bc * 1000000000 / un))
-    printf "$i/$max($(numfmt --to=iec <<<$bc))\t$((100 * i / max))%%\t下载速度$(numfmt --to=iec <<<$bs)/s *${THREAD}\t剩余时间:$(displaytime $((rn / 1000000000)))\r"
+    fraction="$i/$max($(numfmt --to=iec <<<$bc))"
+    rate="$((100 * i / max))%"
+    speed="$(numfmt --to=iec <<<$bs)/s *${THREAD}"
+    use_time="$(displaytime $(($(date +%s) - ss)))"
+    remain="$(displaytime $((rn / 1000000000)))"
+    printf "%-20s%-5s%-12s已用时:%-15s剩余估算:%-15s\r" "$fraction" "$rate" "$speed" "$use_time" "$remain"
     echo "" >&5 #任务执行完后在fd5中写入一个占位符
   } &
 done
@@ -79,6 +84,7 @@ if [ -n "$decrypt" ]; then
       openssl aes-128-cbc -d -in "$dir/$f" -out "$f" -nosalt -iv "$vector" -K "$key"
       cat "$f" >>"$name"
       rm "$f" "$dir/$f"
+      i=$((i + 1))
       echo -en "$i/$max($((100 * i / max))%)\r"
     done
     echo
